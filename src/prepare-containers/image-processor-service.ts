@@ -1,18 +1,26 @@
-import * as fs from "fs";
-import { Buffer } from "buffer";
+import { Buffer } from 'buffer';
 
 export class ImageProcessor {
   width: number = 0;
   height: number = 0;
   private bitsPerPixel: number = 0;
   private imageData: Uint8Array;
+  private header: Uint8Array;
 
   constructor() {
     this.imageData = new Uint8Array(0);
   }
 
-  getImageDimensions(): { width: number; height: number, bitsPerPixel: number } {
-    return { width: this.width, height: this.height, bitsPerPixel: this.bitsPerPixel };
+  getImageDimensions(): {
+    width: number;
+    height: number;
+    bitsPerPixel: number;
+  } {
+    return {
+      width: this.width,
+      height: this.height,
+      bitsPerPixel: this.bitsPerPixel,
+    };
   }
 
   private parseBMPHeader(buffer: Buffer): {
@@ -24,12 +32,12 @@ export class ImageProcessor {
     // Проверяем сигнатуру файла
     const signature = buffer.readUInt16LE(0);
     if (signature !== 0x4d42) {
-      throw new Error("Неверный формат файла (ожидается BMP)");
+      throw new Error('Неверный формат файла (ожидается BMP)');
     }
 
     const headerSize = buffer.readInt32LE(14);
     if (headerSize !== 40) {
-      throw new Error("Неподдерживаемый размер информационного заголовка");
+      throw new Error('Неподдерживаемый размер информационного заголовка');
     }
 
     return {
@@ -41,7 +49,6 @@ export class ImageProcessor {
   }
 
   async loadImage(buffer: Buffer): Promise<void> {
-
     // Парсим заголовок BMP
     const header = this.parseBMPHeader(buffer);
 
@@ -55,6 +62,7 @@ export class ImageProcessor {
 
     // Извлекаем данные пикселей
     this.imageData = buffer.slice(header.dataOffset);
+    this.header = buffer.slice(0, header.dataOffset);
   }
 
   extractBitplane(bitPosition: number): number[][] {
@@ -75,32 +83,41 @@ export class ImageProcessor {
   }
 
   extractBitplane24bit(bitPosition: number): number[][] {
-  const bitplane: number[][] = Array(this.height)
-    .fill(0)
-    .map(() => Array(this.width).fill(0));
+    const bitplane: number[][] = Array(this.height)
+      .fill(0)
+      .map(() => Array(this.width).fill(0));
 
-  for (let y = 0; y < this.height; y++) {
-    for (let x = 0; x < this.width; x++) {
-      // Вычисляем начальный индекс пикселя (каждый пиксель — 3 байта)
-      const pixelIndex = (y * this.width + x) * 3;
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        // Вычисляем начальный индекс пикселя (каждый пиксель — 3 байта)
+        const pixelIndex = (y * this.width + x) * 3;
 
-      // Получаем значения RGB для пикселя
-      const r = this.imageData[pixelIndex];
-      const g = this.imageData[pixelIndex + 1];
-      const b = this.imageData[pixelIndex + 2];
+        // Получаем значения RGB для пикселя
+        const r = this.imageData[pixelIndex];
+        const g = this.imageData[pixelIndex + 1];
+        const b = this.imageData[pixelIndex + 2];
 
-      // Извлекаем бит из каждого канала (если bitPosition в диапазоне 0–7)
-      let bitValue = 0;
-      if (bitPosition >= 0 && bitPosition <= 7) {
-        bitValue = ((r >> bitPosition) & 1) |
-                  ((g >> bitPosition) & 1) |
-                  ((b >> bitPosition) & 1);
+        // Извлекаем бит из каждого канала (если bitPosition в диапазоне 0–7)
+        let bitValue = 0;
+        if (bitPosition >= 0 && bitPosition <= 7) {
+          bitValue =
+            ((r >> bitPosition) & 1) |
+            ((g >> bitPosition) & 1) |
+            ((b >> bitPosition) & 1);
+        }
+        // Если bitPosition > 7, устанавливаем 0 (вне диапазона 8‑битных каналов)
+
+        bitplane[y][x] = bitValue;
       }
-      // Если bitPosition > 7, устанавливаем 0 (вне диапазона 8‑битных каналов)
-
-      bitplane[y][x] = bitValue;
     }
+    return bitplane;
   }
-  return bitplane;
-}
+
+  getPixelBuffer(): Uint8Array {
+    return new Uint8Array(this.imageData);
+  }
+
+  getImage(): Buffer {
+    return Buffer.concat([this.header, this.imageData]);
+  }
 }

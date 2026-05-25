@@ -1,7 +1,11 @@
-import { writeFileSync } from "fs";
-import { createBlackAndWhitePalette, createBmpHeader, createGrayPalette } from "./header-helpers";
-import { FISH_TEXT } from "datasets/fish";
-import { binaryToString, stringToBinary } from "./utils";
+import { writeFileSync } from 'fs';
+import {
+  createBlackAndWhitePalette,
+  createBmpHeader,
+  createGrayPalette,
+} from './header-helpers';
+import { FISH_TEXT } from 'datasets/fish';
+import { binaryToString, stringToBinary } from './utils';
 
 export async function createBitplaneImage(
   width: number,
@@ -11,17 +15,17 @@ export async function createBitplaneImage(
 ): Promise<void> {
   // Проверяем корректность входных данных
   if (bitplane.length !== height) {
-    throw new Error("Неверное количество строк в битовом слое");
+    throw new Error('Неверное количество строк в битовом слое');
   }
   if (bitplane[0].length !== width) {
-    throw new Error("Неверное количество столбцов в битовом слое");
+    throw new Error('Неверное количество столбцов в битовом слое');
   }
 
   const rowSize = width;
   const padding = (4 - (rowSize % 4)) % 4;
   const totalRowSize = rowSize + padding;
   const totalSize = totalRowSize * height;
-  const buffer = Buffer.alloc(totalSize+1);
+  const buffer = Buffer.alloc(totalSize + 1);
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -40,7 +44,7 @@ export async function createBitplaneImage(
 
   // Создаем заголовок BMP
   const bmpHeader = createBmpHeader(width, height);
-  const palette = createBlackAndWhitePalette()
+  const palette = createBlackAndWhitePalette();
 
   // Сохраняем файл
   try {
@@ -73,7 +77,7 @@ export async function createCombinedImage(
       for (let bit = 0; bit < numBits; bit++) {
         binaryString.push(`${bitplanes[bit][y][x]}`);
       }
-      const pixelValue = parseInt(binaryString.reverse().join(''), 2)
+      const pixelValue = parseInt(binaryString.reverse().join(''), 2);
       const pixelIndex = rowStart + x * bytesPerPixel;
       buffer.writeUInt8(pixelValue, pixelIndex);
     }
@@ -81,9 +85,9 @@ export async function createCombinedImage(
 
   // Создаем заголовок BMP
   const bmpHeader = createBmpHeader(width, height);
-  const palette = createGrayPalette()
+  const palette = createGrayPalette();
 
-  const file = Buffer.concat([bmpHeader, palette, buffer])
+  const file = Buffer.concat([bmpHeader, palette, buffer]);
   // Сохраняем файл
   writeFileSync(combinedPath, file);
   console.log(`Полноцветное изображение сохранено: ${combinedPath}`);
@@ -97,19 +101,18 @@ export function replaceBitplaneToText(
   height: number,
   width: number,
   text: string = FISH_TEXT,
-){
-  const charsArray = stringToBinary(text)
+) {
+  const charsArray = stringToBinary(text);
   const bitArray = charsArray.join('').split('');
 
   for (let y = 0; y < height; y++) {
     const rowStart = y * height;
 
     for (let x = 0; x < width; x++) {
-      const i = Number.parseInt(bitArray[rowStart+x]);
-      bitplanes[bitplaneIndex][x][y] = i ? i : 0
+      const i = Number.parseInt(bitArray[rowStart + x]);
+      bitplanes[bitplaneIndex][x][y] = i ? i : 0;
     }
   }
-
 
   return bitplanes;
 }
@@ -125,5 +128,5 @@ export function extractTextFromBitplane(
       binaryText.push(bitplane[x][y]);
     }
   }
-  return binaryToString(binaryText.join(''))
+  return binaryToString(binaryText.join(''));
 }

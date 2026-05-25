@@ -1,10 +1,10 @@
 export function createBlackAndWhitePalette() {
   const palette = new Uint8Array(1024);
 
-    palette[0] = 0xff; // Blue
-    palette[1] = 0xff; // Green
-    palette[2] = 0xff; // Red
-    palette[3] = 0; // Reserved
+  palette[0] = 0xff; // Blue
+  palette[1] = 0xff; // Green
+  palette[2] = 0xff; // Red
+  palette[3] = 0; // Reserved
 
   // Заполняем оставшиеся цвета чёрным
   for (let i = 1; i < 256; i++) {
@@ -26,7 +26,7 @@ export function createGrayPalette() {
     palette[i * 4 + 0] = value; // Blue
     palette[i * 4 + 1] = value; // Green
     palette[i * 4 + 2] = value; // Red
-    palette[i * 4 + 3] = 0;   // Reserved (запасной байт)
+    palette[i * 4 + 3] = 0; // Reserved (запасной байт)
   }
 
   return palette;

@@ -5,6 +5,7 @@
 /images/*
 /datasets/*
 !/datasets/fish.ts
+!/datasets/sber-logo-ru.png
 
 # Logs
 logs

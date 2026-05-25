@@ -4,6 +4,6 @@ import { PrepareContainersService } from './prepare-containers.service';
 
 @Module({
   controllers: [PrepareContainersController],
-  providers: [PrepareContainersService]
+  providers: [PrepareContainersService],
 })
 export class PrepareContainersModule {}
